@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project(xportexample)
 
-set(SRC_LIST )
-aux_source_directory(. SRC_LIST)
+add_executable(simple_demo simple.cpp)
+target_link_libraries(simple_demo xport)
 
-add_executable(${PROJECT_NAME} ${SRC_LIST})
-target_link_libraries(${PROJECT_NAME} xport)
+#add_executable(decrypt_demo decrypt.cpp)
+#target_link_libraries(decrypt_demo xport)

@@ -8,7 +8,6 @@ namespace xport
 
 HttpStreamCB::HttpStreamCB(const shared_ptr<IReader>& reader)
     :mReader(reader), mSize(reader->to() > 0 ? reader->to() - reader->from() + 1 : -1){
-    logi("output %d=>%d ,total %d", reader->from(), reader->to(), mSize);
 }
 
 string HttpStreamCB::read(uint64_t offset){
@@ -19,7 +18,6 @@ string HttpStreamCB::read(uint64_t offset){
     }
 
     auto buf = mReader->read();
-    // logi("begin read:%d", buf.size());
 
     if (mSize > 0){
         auto left = mSize - offset;

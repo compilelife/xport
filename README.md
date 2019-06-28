@@ -38,6 +38,28 @@ xport就是这样一个推流方案，有以下特点：
 
 现在你就可以用任意的播放器播放你的视频了。
 
+# 编译
+
+如需编译动态库：
+
+```shell
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=release -DBUILD_SHARED_LIBS=1
+make
+```
+头文件在`build/include`，动态库在`build/libxport.so`
+
+如需编译test和example（test需要开发环境有gtest）：
+
+```shell
+mkdir build
+cd build
+cmake ..
+make
+```
+example在`example/*_demo`，test在`test/xportest`
+
 # 开发中
 
 - 丰富example

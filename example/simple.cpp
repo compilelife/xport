@@ -27,7 +27,6 @@ public:
 			fseek(mFp, 0, SEEK_END);
 			mSize = ftell(mFp);
 			fseek(mFp, 0, SEEK_SET);
-			printf("open success with size=%d\n", mSize);
 			return true;
 		}
 

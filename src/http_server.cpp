@@ -76,8 +76,6 @@ public:
         auto sessionId = getSessionId(req);
         MediaRequest mediaRequest((MediaRequestImpl*)&req);
 
-        logi("new request[%s]: %s", sessionId.c_str(), req.path.c_str());
-
         shared_ptr<ReadMedia> media;
         if (sessionId.empty()) {
             media = mMediaManager->createMedia(mediaRequest);
@@ -86,10 +84,8 @@ public:
         }
 
         if (media){
-            logi("make response");
             makeMediaResponse(req, res, media);
         }else{
-            loge("media create failed");
             makeFailResponse(res);
         }
     }
@@ -141,8 +137,6 @@ public:
         int64_t from = 0;
         int64_t to  = -1;
         getRange(req, from, to);
-
-        logi("range: %d-%d", from, to);
 
         auto reader = media->createReader(from, to);
         if (!reader){
