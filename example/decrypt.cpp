@@ -20,9 +20,9 @@ public:
     }
     virtual bool open(){
         if (mFp){
-			fseek(mFp, 0, SEEK_END);
-			mSize = ftell(mFp);
-			fseek(mFp, 0, SEEK_SET);
+            fseek(mFp, 0, SEEK_END);
+            mSize = ftell(mFp);
+            fseek(mFp, 0, SEEK_SET);
             if (fread(mKey, 1, KEY_LEN, mFp) < KEY_LEN){
                 printf("failed to read key\n");
                 fclose(mFp);
@@ -31,14 +31,14 @@ public:
             }
 
             mSize -= KEY_LEN;//秘钥长度无需计入
-			return true;
-		}
+            return true;
+        }
 
-		return false;
+        return false;
     }
     virtual void close(){
         if (mFp)
-			fclose(mFp);
+            fclose(mFp);
     }
 
     void decrypt(char* buf, size_t ret){
@@ -74,14 +74,14 @@ public:
 
 class EncryptedMediaCreator : public IMediaCreator{
 public:
-	int scoreRequest(MediaRequest& req){
-		return 100;
-	}
+    int scoreRequest(MediaRequest& req){
+        return 100;
+    }
 
     IMedia* create(MediaRequest& req){
-		auto path = req.getParamValue("path");
-		return new EncryptedMedia(path);
-	}
+        auto path = req.getParamValue("path");
+        return new EncryptedMedia(path);
+    }
 };
 
 static void encrypt(const char* path, const char* savepath);
