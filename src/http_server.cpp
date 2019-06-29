@@ -12,6 +12,8 @@
 using namespace httplib;
 using namespace std;
 
+#define TAG "HttpServer"
+
 namespace xport
 {
 
@@ -34,6 +36,8 @@ private:
     }
 public:
     bool startAsync(const char* host, int port) {
+        logi("startAsync");
+
         if (!prepareServer()){
             return false;
         }
@@ -56,6 +60,8 @@ public:
         return true;
     }
     bool start(const char* host, int port) {
+        logi("start");
+
         if (!prepareServer()){
             return false;
         }
@@ -63,6 +69,7 @@ public:
         return startServer(host, port);
     }
     void stop() {
+        logi("stop");
         mServer.stop();
 
         if (mThd.joinable()){
@@ -82,6 +89,8 @@ public:
         }else{
             media = mMediaManager->getMediaOrCreate(stoi(sessionId), mediaRequest);
         }
+
+        logi("new request: sessionId=%d, path=%s, response media: %d, seekable=%d", sessionId, req.path.c_str(), media->id(), media->seekable());
 
         if (media){
             makeMediaResponse(req, res, media);
@@ -138,8 +147,12 @@ public:
         int64_t to  = -1;
         getRange(req, from, to);
 
+        auto mediaId = to_string(media->id());
+        auto tag = mediaId.c_str();
+        logti(tag, "request media range from %" PRId64 " to %" PRId64, from, to);
         auto reader = media->createReader(from, to);
         if (!reader){
+            logti(tag, "no reader can be created");
             res.status = 416;
             return;
         }
@@ -152,6 +165,7 @@ public:
 
         if (media->seekable()){
             if (media->size() < 0 || reader->to() < 0 || reader->from() < 0){
+                loge("seekable media with invalid read parameters: size=%d, from=%" PRId64 ", to=%" PRId64, media->size(), reader->from(), reader->to());
                 res.status = 500;
                 return;
             }

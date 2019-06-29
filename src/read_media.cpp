@@ -3,12 +3,14 @@
 
 using namespace std;
 
+#define TAG (mTag.c_str())
+
 namespace xport
 {
 
 
 ReadMedia::ReadMedia(const std::shared_ptr<IMedia>& media)
-    :mMedia(media),mClosed(false),mOpened(false){
+    :mMedia(media),mClosed(false),mOpened(false),mTag("ReadMedia"){
 }
 
 ReadMedia::~ReadMedia(){
@@ -23,9 +25,12 @@ shared_ptr<IReader> ReadMedia::createReader(int64_t from, int64_t to){
     {
         auto lastReader = mLastReader.lock();
         if (lastReader){
+            logi("finish reader %s", lastReader->toString().c_str());
             lastReader->markDead();
         }
     }
+
+    logi("create reader...");
 
     if (from < 0)
         from = 0;
@@ -65,6 +70,7 @@ shared_ptr<IReader> ReadMedia::createReader(int64_t from, int64_t to){
     shared_ptr<Reader> reader(new Reader(this, from, to));
     mLastReader = reader;
 
+    logi("reader %s created", reader->toString().c_str());
     return reader;
 }
 
@@ -75,27 +81,37 @@ bool ReadMedia::isIdle() {
 bool ReadMedia::open(){
     if (mOpened)
         return true;
-    
+        
+    logi("open");
     mOpened = mMedia->open();
     return mOpened;
 }
 
 void ReadMedia::close(){
     if (!mClosed){
+        logi("close");
         mClosed = true;
         mMedia->close();
     }
 }
 
+void ReadMedia::setId(int id){
+    mId = id;
+    mTag = to_string(id);
+}
+
 string ReadMedia::Reader::read(){
     lock_guard<mutex> l(mMedia->mReadLock);
     if (!mAlive){
-        logi("already die");
+        logtw(mLabel.c_str(), "already die");
         return "";
     }
 
     return mMedia->read();
 }
 
+ReadMedia::Reader::~Reader(){
+    logi("reader %s finished", mLabel.c_str());
+}
     
 } // namespace xport

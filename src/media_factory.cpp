@@ -1,6 +1,9 @@
 #include "media_factory.h"
+#include "log.h"
 
 using namespace std;
+
+#define TAG "MediaFactory"
 
 namespace xport{
     
@@ -36,6 +39,7 @@ shared_ptr<IMediaCreator> MediaFactory::chooseCreator(MediaRequest& req){
         return mCreators[index];
     }
 
+    logw("no creator");
     return nullptr;
 }
 

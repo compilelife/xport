@@ -5,9 +5,10 @@
 using namespace std;
 using namespace aloop;
 
+#define TAG "MediaManager"
+
 namespace xport
 {
-
 
 enum {
     kWhatGetMedia,
@@ -81,6 +82,7 @@ shared_ptr<ReadMedia> MediaManager::createMedia(MediaRequest& request) {
 }
 
 void MediaManager::watchMedia(const shared_ptr<ReadMedia>& media){
+    logi("watch media %d", media->id());
     auto msg = AMessage::create(kWhatWatchDog, shared_from_this());
     msg->setObject("media", media);
     msg->post(idleTimeoutUs(media));
@@ -110,8 +112,8 @@ void MediaManager::onMessageReceived(const shared_ptr<AMessage> &msg) {
         if (imedia) {
             auto id = ++mNextId;
             auto media = shared_ptr<ReadMedia>(new ReadMedia(imedia));
+            media->setId(id);
             if (media->open()){
-                media->setId(id);
                 response->setObject("media", media);
                 mMedias[id] = media;
             }else{

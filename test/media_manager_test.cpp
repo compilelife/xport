@@ -4,7 +4,7 @@
 #include "../src/log.h"
 
 #define FAIL_EXIT(msg)\
-loge(msg);\
+logte("MediaManagerTest", msg);\
 abort();
 
 class ShortTimeoutMedia : public ASeekableMedia{

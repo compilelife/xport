@@ -7,6 +7,7 @@ TEST(HttpStreamCB, readInfinite) {
         string read(){return "12345";}//return 5 bytes
         int64_t from(){return 0;}
         int64_t to(){return -1;}
+        int mediaId(){return 1;}
     };
 
     HttpStreamCB cb(shared_ptr<IReader>(new InifiniteReader));
@@ -51,6 +52,7 @@ public:
     }
     int64_t from(){return 0;}
     int64_t to(){return mBuf.size()-1;}
+    int mediaId(){return 1;}
 };
 
 TEST(HttpStreamCB, readLimit){

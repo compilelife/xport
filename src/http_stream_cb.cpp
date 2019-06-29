@@ -3,6 +3,8 @@
 
 using namespace std;
 
+#define TAG (to_string(mReader->mediaId()).c_str())
+
 namespace xport
 {
 
@@ -12,8 +14,8 @@ HttpStreamCB::HttpStreamCB(const shared_ptr<IReader>& reader)
 
 string HttpStreamCB::read(uint64_t offset){
     if (mSize > 0 && offset >= mSize) {
-        mReader.reset();
         logi("read enough");
+        mReader.reset();
         return "";
     }
 

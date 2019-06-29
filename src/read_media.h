@@ -13,6 +13,7 @@ public:
     virtual std::string read() = 0;
     virtual int64_t from() = 0;
     virtual int64_t to() = 0;
+    virtual int mediaId() = 0;
 };
 
 class ReadMedia : public IMedia{
@@ -22,19 +23,25 @@ private:
     int mId;
     bool mClosed;
     bool mOpened;
+    std::string mTag;
 
 private:
     class Reader : public IReader{
     private:
         bool mAlive;
         ReadMedia* mMedia;
-        const uint64_t mFrom;
-        const uint64_t mTo;
+        const int64_t mFrom;
+        const int64_t mTo;
+        const std::string mLabel;
     public:
         Reader(ReadMedia* media, int64_t from, int64_t to)
-            :mAlive(true), mMedia(media), mFrom(from), mTo(to){
+            :mAlive(true), mMedia(media), mFrom(from), mTo(to),
+            mLabel("("+std::to_string(mFrom)+"=>"+std::to_string(mTo)+")"){
         }
+        ~Reader();
         void markDead() {mAlive=false;}
+        std::string toString(){return mLabel;}
+        int mediaId(){return mMedia->id();}
     public:
         virtual std::string read();
         virtual int64_t from() {return mFrom;}
@@ -48,7 +55,7 @@ public:
     std::shared_ptr<IReader> createReader(int64_t from, int64_t to);
     bool isIdle();
     int id(){return mId;}
-    void setId(int id){mId = id;}
+    void setId(int id);
 
 //继承自IMedia
 public:
