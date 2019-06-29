@@ -48,7 +48,7 @@ public:
 	}
 
     int64_t seek(int64_t offset){
-		return fseek(mFp, offset, SEEK_SET);
+		return fseek(mFp, offset, SEEK_SET) < 0 ? -1 : offset;
 	}
 
     int64_t size(){

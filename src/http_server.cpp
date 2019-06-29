@@ -90,11 +90,11 @@ public:
             media = mMediaManager->getMediaOrCreate(stoi(sessionId), mediaRequest);
         }
 
-        logi("new request: sessionId=%d, path=%s, response media: %d, seekable=%d", sessionId, req.path.c_str(), media->id(), media->seekable());
-
         if (media){
+            logi("new request: sessionId=%s, path=%s, response media: %d, seekable=%d", sessionId.c_str(), req.path.c_str(), media->id(), media->seekable());
             makeMediaResponse(req, res, media);
         }else{
+            logi("new request: sessionId=%s, path=%s, response media:null", sessionId.c_str(), req.path.c_str());
             makeFailResponse(res);
         }
     }

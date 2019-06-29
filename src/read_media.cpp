@@ -49,10 +49,12 @@ shared_ptr<IReader> ReadMedia::createReader(int64_t from, int64_t to){
             from = size - 1;
         }
 
-        if (mMedia->seek(from) < 0){
+        auto seekRet = mMedia->seek(from);
+        if (seekRet < 0){
             loge("seek failed on seekable media");
             return nullptr;
         }
+        from = seekRet;
     }else{
         from = 0;
         to = -1;
@@ -111,7 +113,7 @@ string ReadMedia::Reader::read(){
 }
 
 ReadMedia::Reader::~Reader(){
-    logi("reader %s finished", mLabel.c_str());
+    logti(to_string(mediaId()).c_str(), "reader %s finished", mLabel.c_str());
 }
     
 } // namespace xport
