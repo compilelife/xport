@@ -9,6 +9,10 @@ using namespace std;
 
 #define KEY_LEN 8//假设我们采用固定秘钥
 
+//EncryptedMedia 以加密文件做媒体，从http推送解密后的数据
+//这里我们假设了一种简单的加密：
+//加密文件中，前8个字节是密钥，之后跟随加密后的视频数据。
+//视频加密的方式是把视频数据与8字节秘钥做异或运算
 class EncryptedMedia: public SeekableMedia{
     FILE* mFp;
     int64_t mSize;
@@ -63,8 +67,8 @@ public:
         return string(buf, ret);
     }
     virtual int64_t seek(int64_t offset){
-        auto encryptedOffset = offset + KEY_LEN;
-        mKeyOffset = offset - (offset / 8 * 8);
+        auto encryptedOffset = offset + KEY_LEN;//对应的加密文件（实体文件）的偏移位置
+        mKeyOffset = offset - (offset / KEY_LEN * KEY_LEN);//seek不会刚好落在8字节开头，所以要记录密钥偏移
         return fseek(mFp, encryptedOffset, SEEK_SET) < 0 ? -1 : offset;
     }
     virtual int64_t size(){
@@ -104,6 +108,7 @@ int main(int argc, char* argv[]){
     return 0;
 }
 
+//这是对应的加密代码，供参考
 static void encrypt(const char* path, const char* savepath){
     uint8_t key[KEY_LEN];
     srand(time(nullptr));
