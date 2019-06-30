@@ -102,6 +102,17 @@ void ReadMedia::setId(int id){
     mTag = to_string(id);
 }
 
+ReadMedia::Reader::Reader(const std::shared_ptr<ReadMedia>& media,
+        const std::shared_ptr<aloop::AMessage>& closeNotify,
+        int64_t from, 
+        int64_t to)
+    :mAlive(true), mMedia(media), mFrom(from), mTo(to),
+    mCloseNotify(closeNotify){
+    char buf[30]={0};
+    snprintf(buf, sizeof(buf), "(%p %" PRId64 " => %" PRId64 ")", this, mFrom, mTo);
+    mLabel = buf;
+}
+
 string ReadMedia::Reader::read(){
     lock_guard<mutex> l(mMedia->mReadLock);
     if (!mAlive){

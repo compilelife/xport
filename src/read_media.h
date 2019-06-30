@@ -33,17 +33,13 @@ private:
         std::shared_ptr<ReadMedia> mMedia;
         const int64_t mFrom;
         const int64_t mTo;
-        const std::string mLabel;
+        std::string mLabel;
         std::shared_ptr<aloop::AMessage> mCloseNotify;
     public:
         Reader(const std::shared_ptr<ReadMedia>& media,
             const std::shared_ptr<aloop::AMessage>& closeNotify,
             int64_t from, 
-            int64_t to)
-            :mAlive(true), mMedia(media), mFrom(from), mTo(to),
-            mLabel("("+std::to_string(mFrom)+"=>"+std::to_string(mTo)+")"),
-            mCloseNotify(closeNotify){
-        }
+            int64_t to);
         ~Reader();
         void markDead() {mAlive=false;}
         std::string toString(){return mLabel;}

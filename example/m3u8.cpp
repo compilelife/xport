@@ -5,7 +5,7 @@
 using namespace std;
 using namespace xport;
 
-#define RES_DIR "/home/chenyong/mac/res/video/m3u8/"
+#define RES_DIR "../../../mac/res/video/m3u8/"
 static const int VIDEO_COUNT = 3;
 static const char* VIDEOS[VIDEO_COUNT] = {"1.ts", "2.ts", "3.ts"};
 
@@ -77,10 +77,12 @@ private:
     }
 };
 
+//http://127.0.0.1:8000/media/m3u8
 class M3U8MediaCreator : public IMediaCreator{
 public:
     int scoreRequest(MediaRequest& req){
-        return 100;
+        auto segs = req.segments();
+        return segs[1] == "m3u8";
     }
 
     IMedia* create(MediaRequest& req){
@@ -88,6 +90,7 @@ public:
     }
 };
 
+#ifndef EXCLUDE_MAIN
 int main(int argc, char* argv[]){
     releaseOwnershipToRegsiter(new M3U8MediaCreator);
 
@@ -100,3 +103,4 @@ int main(int argc, char* argv[]){
 
     return 0;
 }
+#endif

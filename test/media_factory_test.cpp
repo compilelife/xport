@@ -70,7 +70,7 @@ TEST_F(MediaFactoryTest, SelectCreator) {
     releaseOwnershipToRegsiter(encCreator);
     releaseOwnershipToRegsiter(cameraCreator);
 
-    mMediaRequestImpl->path = "camera";
+    mMediaRequestImpl->path = "/camera";
 
     auto media = MediaFactory::getInstance().createMedia(*mRequest);
     ASSERT_EQ(cameraCreator->id, media.get());

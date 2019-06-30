@@ -18,7 +18,7 @@ vector<string> MediaRequest::segments(){
     auto req = (Request*)mImpl;
     
     regex delim("/");
-    return vector<string>(sregex_token_iterator(req->path.begin(), req->path.end(), delim, -1), sregex_token_iterator());
+    return vector<string>(sregex_token_iterator(req->path.begin()+1, req->path.end(), delim, -1), sregex_token_iterator());
 }
 
 multimap<string, string> MediaRequest::params(){

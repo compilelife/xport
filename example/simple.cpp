@@ -57,20 +57,24 @@ public:
 
 };
 
+//http://127.0.0.1:8000/media/simple?path=/tmp/1.mp4
+
 //FileMediaCreator 定义对于什么请求，返回FileMedia
 class FileMediaCreator : public IMediaCreator{
 public:
     int scoreRequest(MediaRequest& req){
-        return 100;//作为一个简单的Demo，我们只有一种媒体类型，所以任何请求都创建FileMedia
+        // return 100;//作为一个简单的Demo，我们只有一种媒体类型，所以也可以直接返回100
+        auto segs = req.segments();
+        return segs[1] == "simple";
     }
 
     IMedia* create(MediaRequest& req){
-        //http://127.0.0.1:8000/media?path=/tmp/1.mp4
         auto path = req.getParamValue("path"); //获取请求的视频文件路径
         return new FileMedia(path);
     }
 };
 
+#ifndef EXCLUDE_MAIN
 int main(int argc, char* argv[]){
     releaseOwnershipToRegsiter(new FileMediaCreator);
 
@@ -83,3 +87,4 @@ int main(int argc, char* argv[]){
 
     return 0;
 }
+#endif

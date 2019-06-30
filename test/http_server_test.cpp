@@ -55,7 +55,7 @@ class MockStreamMediaCreator: public IMediaCreator{
 public:
     int scoreRequest(MediaRequest& req){
         auto paths = req.segments();
-        if (paths.size() >= 3 && paths[2] == "stream"){
+        if (paths.size() >= 2 && paths[1] == "stream"){
             return 100;
         }
         return 0;
@@ -69,7 +69,7 @@ class MockSeekableMediaCreator: public IMediaCreator{
 public:
     int scoreRequest(MediaRequest& req){
         auto paths = req.segments();
-        if (paths.size() >= 3 && paths[2] == "seekable"){
+        if (paths.size() >= 2 && paths[1] == "seekable"){
             return 100;
         }
         return 0;

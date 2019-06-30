@@ -39,9 +39,6 @@ public:
         mClosed = true;
     }
 };
-static void waitMediaTimeout(){
-    usleep(20*1000L);
-}
 
 class NormalCreator: public IMediaCreator{
 public:

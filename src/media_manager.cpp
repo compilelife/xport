@@ -1,6 +1,7 @@
 #include "media_manager.h"
 #include "media_factory.h"
 #include "log.h"
+#include <algorithm>
 
 using namespace std;
 using namespace aloop;
@@ -91,7 +92,7 @@ void MediaManager::onMessageReceived(const shared_ptr<AMessage> &msg) {
     case kWhatWatchDog:{
         shared_ptr<ReadMedia> media;
         msg->findObject("media", &media);
-        if (media->isIdle()){
+        if (media->isIdle() && mMedias.find(media->id()) != mMedias.end()){
             logti(to_string(media->id()).c_str(), "idle timeout");
             media->close();
             mMedias.erase(media->id());

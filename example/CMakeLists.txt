@@ -10,3 +10,6 @@ target_link_libraries(decrypt_demo xport)
 
 add_executable(m3u8_demo m3u8.cpp)
 target_link_libraries(m3u8_demo xport)
+
+add_executable(mix_demo mix.cpp)
+target_link_libraries(mix_demo xport)

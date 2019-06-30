@@ -76,10 +76,12 @@ public:
     }
 };
 
+//http://127.0.0.1:8000/media/encrypt?path=/tmp/1.mp4
 class EncryptedMediaCreator : public IMediaCreator{
 public:
     int scoreRequest(MediaRequest& req){
-        return 100;
+        auto segs = req.segments();
+        return segs[1] == "encrypt";
     }
 
     IMedia* create(MediaRequest& req){
@@ -88,6 +90,7 @@ public:
     }
 };
 
+#ifndef EXCLUDE_MAIN
 static void encrypt(const char* path, const char* savepath);
 int main(int argc, char* argv[]){
     if (argc >= 3){
@@ -136,3 +139,4 @@ static void encrypt(const char* path, const char* savepath){
     fclose(from);
     fclose(to);
 }
+#endif
