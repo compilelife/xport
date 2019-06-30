@@ -107,31 +107,3 @@ TEST_F(MediaManagerTest, dontUseAbandonMedia){
     ASSERT_TRUE(media2);
     ASSERT_NE(id, media2->id());
 }
-
-TEST_F(MediaManagerTest, watchMedia){
-    auto media = mManager->createMedia(mRequest);
-    ASSERT_TRUE(media);
-    auto id = media->id();
-
-    //创建reader可以让media保持alive
-    auto reader = media->createReader(0,100);
-
-    mManager->watchMedia(media);
-    //“关闭”media，这时只有manager的watchdog msg中保持了media的强引用
-    media.reset();
-
-    //alive的情况下watch dog不会关闭media
-    waitMediaTimeout();
-    auto getMedia = mManager->getMediaOrCreate(id, mRequest);
-    ASSERT_TRUE(getMedia);
-    ASSERT_EQ(id, getMedia->id());
-
-    //“关闭”reader
-    reader.reset();
-
-    //idle的情况下watch dog会关闭media
-    waitMediaTimeout();
-    getMedia = mManager->getMediaOrCreate(id, mRequest);
-    ASSERT_TRUE(getMedia);
-    ASSERT_NE(id, getMedia->id());
-}

@@ -4,6 +4,7 @@
 #include "imedia.h"
 #include <memory>
 #include <mutex>
+#include "aloop.h"
 
 namespace xport{
     
@@ -16,7 +17,7 @@ public:
     virtual int mediaId() = 0;
 };
 
-class ReadMedia : public IMedia{
+class ReadMedia : public IMedia, public std::enable_shared_from_this<ReadMedia>{
 private:
     std::mutex mReadLock;
     std::shared_ptr<IMedia> mMedia;
@@ -29,14 +30,19 @@ private:
     class Reader : public IReader{
     private:
         bool mAlive;
-        ReadMedia* mMedia;
+        std::shared_ptr<ReadMedia> mMedia;
         const int64_t mFrom;
         const int64_t mTo;
         const std::string mLabel;
+        std::shared_ptr<aloop::AMessage> mCloseNotify;
     public:
-        Reader(ReadMedia* media, int64_t from, int64_t to)
+        Reader(const std::shared_ptr<ReadMedia>& media,
+            const std::shared_ptr<aloop::AMessage>& closeNotify,
+            int64_t from, 
+            int64_t to)
             :mAlive(true), mMedia(media), mFrom(from), mTo(to),
-            mLabel("("+std::to_string(mFrom)+"=>"+std::to_string(mTo)+")"){
+            mLabel("("+std::to_string(mFrom)+"=>"+std::to_string(mTo)+")"),
+            mCloseNotify(closeNotify){
         }
         ~Reader();
         void markDead() {mAlive=false;}
@@ -49,10 +55,14 @@ private:
     };
     std::weak_ptr<Reader> mLastReader;
 
-public:
+private:
     ReadMedia(const std::shared_ptr<IMedia>& media);
+public:
+    static std::shared_ptr<ReadMedia> create(const std::shared_ptr<IMedia>& media){
+        return std::shared_ptr<ReadMedia>(new ReadMedia(media));
+    }
     ~ReadMedia();
-    std::shared_ptr<IReader> createReader(int64_t from, int64_t to);
+    std::shared_ptr<IReader> createReader(const std::shared_ptr<aloop::AMessage>& readerCloseNotify, int64_t from, int64_t to);
     bool isIdle();
     int id(){return mId;}
     void setId(int id);

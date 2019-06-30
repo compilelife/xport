@@ -19,7 +19,7 @@ ReadMedia::~ReadMedia(){
     }
 }
 
-shared_ptr<IReader> ReadMedia::createReader(int64_t from, int64_t to){
+shared_ptr<IReader> ReadMedia::createReader(const std::shared_ptr<aloop::AMessage>& readerCloseNotify, int64_t from, int64_t to){
     lock_guard<mutex> l(mReadLock);
     
     {
@@ -69,7 +69,7 @@ shared_ptr<IReader> ReadMedia::createReader(int64_t from, int64_t to){
         return nullptr;
     }
 
-    shared_ptr<Reader> reader(new Reader(this, from, to));
+    shared_ptr<Reader> reader(new Reader(shared_from_this(), readerCloseNotify, from, to));
     mLastReader = reader;
 
     logi("reader %s created", reader->toString().c_str());
@@ -114,6 +114,10 @@ string ReadMedia::Reader::read(){
 
 ReadMedia::Reader::~Reader(){
     logti(to_string(mediaId()).c_str(), "reader %s finished", mLabel.c_str());
+    if (mMedia->idleTimeout() >= 0 && mCloseNotify){
+        mCloseNotify->setObject("media", mMedia);
+        mCloseNotify->post(mMedia->idleTimeout()*1000L);
+    }
 }
     
 } // namespace xport

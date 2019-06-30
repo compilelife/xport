@@ -81,11 +81,8 @@ shared_ptr<ReadMedia> MediaManager::createMedia(MediaRequest& request) {
     return ret;
 }
 
-void MediaManager::watchMedia(const shared_ptr<ReadMedia>& media){
-    logi("watch media %d", media->id());
-    auto msg = AMessage::create(kWhatWatchDog, shared_from_this());
-    msg->setObject("media", media);
-    msg->post(idleTimeoutUs(media));
+shared_ptr<AMessage> MediaManager::obtainMediaWatchDog(){
+    return AMessage::create(kWhatWatchDog, shared_from_this());
 }
 
 void MediaManager::onMessageReceived(const shared_ptr<AMessage> &msg) {
@@ -95,10 +92,9 @@ void MediaManager::onMessageReceived(const shared_ptr<AMessage> &msg) {
         shared_ptr<ReadMedia> media;
         msg->findObject("media", &media);
         if (media->isIdle()){
+            logti(to_string(media->id()).c_str(), "idle timeout");
             media->close();
             mMedias.erase(media->id());
-        }else{
-            msg->post(idleTimeoutUs(media));
         }
         break;
     }
@@ -111,7 +107,7 @@ void MediaManager::onMessageReceived(const shared_ptr<AMessage> &msg) {
         auto response = AMessage::create();
         if (imedia) {
             auto id = ++mNextId;
-            auto media = shared_ptr<ReadMedia>(new ReadMedia(imedia));
+            auto media = ReadMedia::create(imedia);
             media->setId(id);
             if (media->open()){
                 response->setObject("media", media);

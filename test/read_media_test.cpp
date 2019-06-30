@@ -4,7 +4,7 @@
 //因为ASeekableMedia和AStreamMedia总是open成功，且不需要open即可调用其他接口，为了测试方便，以下均不调用open/close
 
 #define checkRange(media, argFrom, argTo, retFrom, retTo)\
-    {auto reader = media.createReader(argFrom, argTo);\
+    {auto reader = media->createReader(nullptr, argFrom, argTo);\
     ASSERT_TRUE(reader);\
     ASSERT_EQ(retFrom, reader->from());\
     ASSERT_EQ(retTo, reader->to());}
@@ -17,19 +17,19 @@ TEST(ReadMedia, SeekableRange){
 
     shared_ptr<IMedia> media(new FixedSizeMedia);
     auto size = media->size();
-    ReadMedia readMedia(media);
+    auto readMedia = ReadMedia::create(media);
 
     checkRange(readMedia, -1, -1, 0, size-1);
     checkRange(readMedia, size, -1, size-1, size-1);
     checkRange(readMedia, -1, size, 0, size-1);
     checkRange(readMedia, 100, 200, 100, 200);
     
-    ASSERT_FALSE(readMedia.createReader(100,50));
+    ASSERT_FALSE(readMedia->createReader(nullptr, 100,50));
 }
 
 TEST(ReadMedia, StreamRange) {
     shared_ptr<IMedia> media(new AStreamMedia);
-    ReadMedia readMedia(media);
+    auto readMedia = ReadMedia::create(media);
 
     checkRange(readMedia, -1, -1, 0, -1);
     checkRange(readMedia, 100, -1, 0, -1);
@@ -39,18 +39,18 @@ TEST(ReadMedia, StreamRange) {
         bool reset(){return false;}
     };
 
-    ASSERT_FALSE(ReadMedia(shared_ptr<IMedia>(new ResetFailedMedia)).createReader(100, -1));
+    ASSERT_FALSE(ReadMedia::create(shared_ptr<IMedia>(new ResetFailedMedia))->createReader(nullptr, 100, -1));
 }
 
 TEST(ReadMedia, IsIdle) {
-    ReadMedia media(shared_ptr<IMedia>(new AStreamMedia));
+    auto media = ReadMedia::create(shared_ptr<IMedia>(new AStreamMedia));
 
-    auto reader = media.createReader(0,-1);
+    auto reader = media->createReader(nullptr, 0,-1);
     ASSERT_TRUE(reader);
-    ASSERT_FALSE(media.isIdle());
+    ASSERT_FALSE(media->isIdle());
 
     reader.reset();
-    ASSERT_TRUE(media.isIdle());
+    ASSERT_TRUE(media->isIdle());
 }
 
 TEST(ReadMedia, ReaderConflict){
@@ -61,15 +61,15 @@ TEST(ReadMedia, ReaderConflict){
         }
     };
 
-    ReadMedia media(shared_ptr<IMedia>(new StringMedia));
+    auto media = ReadMedia::create(shared_ptr<IMedia>(new StringMedia));
 
-    auto first = media.createReader(0, -1);
+    auto first = media->createReader(nullptr, 0, -1);
     ASSERT_FALSE(first->read().empty());
 
-    auto second = media.createReader(0, -1);
+    auto second = media->createReader(nullptr, 0, -1);
     ASSERT_TRUE(first->read().empty());
     ASSERT_FALSE(second->read().empty());
 
     second.reset();
-    ASSERT_TRUE(media.isIdle());
+    ASSERT_TRUE(media->isIdle());
 }

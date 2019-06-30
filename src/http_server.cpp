@@ -150,7 +150,8 @@ public:
         auto mediaId = to_string(media->id());
         auto tag = mediaId.c_str();
         logti(tag, "request media range from %" PRId64 " to %" PRId64, from, to);
-        auto reader = media->createReader(from, to);
+        auto watchDog = mMediaManager->obtainMediaWatchDog();
+        auto reader = media->createReader(watchDog, from, to);
         if (!reader){
             logti(tag, "no reader can be created");
             res.status = 416;
@@ -179,8 +180,6 @@ public:
             res.status = 200;
             res.set_header("Content-Range", "bytes 0-");
         }
-
-        mMediaManager->watchMedia(media);
     }
 
     void makeFailResponse(Response& res){
