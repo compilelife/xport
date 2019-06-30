@@ -28,7 +28,7 @@ public:
 };
 
 /**
- * \breif 注册creator到MediaFactory
+ * \brief 注册creator到MediaFactory
  * 
  * 等效于MediaFactory::getInstance().registerCreator(shared_ptr<IMediaCreator>(creator));
  * 

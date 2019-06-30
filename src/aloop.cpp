@@ -186,7 +186,7 @@ void ALooper::setName(const char *name) {
 }
 
 /**
- * @breif 将一个handler注册到该looper上执行。一个handler只能注册一次，如果要注册到其他looper上，需要先unregister
+ * @brief 将一个handler注册到该looper上执行。一个handler只能注册一次，如果要注册到其他looper上，需要先unregister
  * @param handler 要注册的handler
  * @return 注册成功后得到的handler。等同于handler->id()。如果注册失败，则返回INVALID_HANDLER_ID
  */

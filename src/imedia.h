@@ -8,7 +8,7 @@ namespace xport
 {
 
 /**
- * \breif 代表一种媒体资源
+ * \brief 代表一种媒体资源
  * 
  * 用户需要继承该类来定义自己的媒体资源
  * “媒体资源”主要要定义的行为有open/close/read/seek
