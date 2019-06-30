@@ -62,8 +62,6 @@ example在`example/*_demo`，test在`test/xportest`
 
 # 开发中
 
-- 丰富example
-- 接口注释
 - Android封装，并利用Java语言特性设计更简洁的调用方式
 - 安全机制（防止未授权连接）
 - 基于http的媒体自定义控制
@@ -74,4 +72,4 @@ example在`example/*_demo`，test在`test/xportest`
 
 ![support](images/support.jpeg)
 
-**如需为您对接自定义媒体源，或定制该项目，或优先开发您的需求，可以加我QQ 505610414**
+**如您需要作者为您对接自定义的媒体源，或定制该项目，或优先开发您的需求，可以加我QQ 505610414**

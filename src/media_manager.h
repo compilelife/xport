@@ -31,7 +31,7 @@ private:
 private:
     inline int64_t idleTimeoutUs(const std::shared_ptr<ReadMedia>& media){
         auto ms = media->idleTimeout();
-        return ms < 0 ? 0 : ms*1000L;
+        return ms < 10 ? 10000L : ms*1000L;//最小10ms，避免Looper线程高CPU占用(TODO，待优化)
     }
 };    
 
