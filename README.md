@@ -62,7 +62,6 @@ example在`example/*_demo`，test在`test/xportest`
 
 # 开发中
 
-- Android封装，并利用Java语言特性设计更简洁的调用方式
 - 安全机制（防止未授权连接）
 - 基于http的媒体自定义控制
 
