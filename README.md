@@ -65,6 +65,10 @@ example在`example/*_demo`，test在`test/xportest`
 - 安全机制（防止未授权连接）
 - 基于http的媒体自定义控制
 
+# 代码结构
+
+参考：https://zhuanlan.zhihu.com/p/71563192
+
 # 赞助
 
 **如果对本项目有兴趣，可以微信扫码支持我**
