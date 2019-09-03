@@ -1,6 +1,6 @@
 #include "common.h"
 #include "../src/httplib.h"
-#include <regex>
+#include <regex.h>
 
 using namespace httplib;
 
@@ -100,21 +100,32 @@ protected:
 };
 
 static void checkCookie(const string& cookie, const string& path){
-    regex idPattern("id=(-?\\d+)");
-    regex pathPattern("path=(.+)");
+    regex_t idPattern;
+    regcomp(&idPattern, "id=(-?[0-9]+)", REG_EXTENDED|REG_NOSUB);
+    ASSERT_EQ(0, regexec(&idPattern, cookie.c_str(), 0, nullptr,0))<<cookie;
 
-    smatch sm;
-    ASSERT_TRUE(regex_search(cookie, sm, idPattern))<<cookie;
-    ASSERT_TRUE(regex_search(cookie, sm, pathPattern))<<cookie;
-    ASSERT_EQ(path, sm.str(1))<<cookie;
+    regex_t pathPattern;
+    regcomp(&pathPattern, "path=(.+)", REG_EXTENDED);
+    int n = 2;
+    regmatch_t matches[n];
+    ASSERT_EQ(0, regexec(&pathPattern, cookie.c_str(), n, matches, 0))<<cookie;
+    ASSERT_EQ(path, cookie.substr(matches[1].rm_so, matches[1].rm_eo-matches[1].rm_so))<<cookie;
 }
 
 static string getId(const string& cookie){
-    regex idPattern("id=(-?\\d+)");
+    regex_t idPattern;
+    if (0 != regcomp(&idPattern, "id=(-?[0-9]+)", REG_EXTENDED)){
+        printf("compile id patten failed\n");
+        return "";
+    }
 
-    smatch sm;
-    regex_search(cookie, sm, idPattern);
-    return sm.str(1);
+    int n = 2;
+    regmatch_t matches[n];
+    if (REG_NOMATCH == regexec(&idPattern, cookie.c_str(), n, matches, 0)){
+        printf("no match\n");
+        return "";
+    }
+    return cookie.substr(matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
 }
 
 TEST_F(HTTPServerTest, checkStreamHeader){

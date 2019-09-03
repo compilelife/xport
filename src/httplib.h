@@ -54,6 +54,8 @@ typedef SOCKET socket_t;
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <regex.h>
+#include <stdlib.h>
 
 typedef int socket_t;
 #define INVALID_SOCKET (-1)
@@ -66,7 +68,6 @@ typedef int socket_t;
 #include <map>
 #include <memory>
 #include <mutex>
-#include <regex>
 #include <string>
 #include <sys/stat.h>
 #include <thread>
@@ -118,7 +119,6 @@ std::pair<std::string, std::string> make_range_header(uint64_t value,
                                                       Args... args);
 
 typedef std::multimap<std::string, std::string> Params;
-typedef std::smatch Match;
 typedef std::function<bool(uint64_t current, uint64_t total)> Progress;
 
 struct MultipartFile {
@@ -138,7 +138,7 @@ struct Request {
   std::string body;
   Params params;
   MultipartFiles files;
-  Match matches;
+  // Match matches; //todo: 如何在regex.h下支持？
 
   Progress progress;
 
@@ -260,7 +260,7 @@ protected:
   size_t payload_max_length_;
 
 private:
-  typedef std::vector<std::pair<std::regex, Handler>> Handlers;
+  typedef std::vector<std::pair<std::string, Handler>> Handlers;
 
   socket_t create_server_socket(const char *host, int port,
                                 int socket_flags) const;
@@ -749,10 +749,11 @@ inline void read_file(const std::string &path, std::string &out) {
 }
 
 inline std::string file_extension(const std::string &path) {
-  std::smatch m;
-  auto pat = std::regex("\\.([a-zA-Z0-9]+)$");
-  if (std::regex_search(path, m, pat)) { return m[1].str(); }
-  return std::string();
+  auto pos = path.rfind(".");
+  if (pos == std::string::npos)
+    return "";
+  
+  return path.substr(pos+1);
 }
 
 inline const char *find_content_type(const std::string &path) {
@@ -827,7 +828,10 @@ inline uint64_t get_header_value_uint64(const Headers &headers, const char *key,
 }
 
 inline bool read_headers(Stream &strm, Headers &headers) {
-  static std::regex re(R"((.+?):\s*(.+?)\s*\r\n)");
+  regex_t re;
+  if (0 != regcomp(&re, "(.+?):\\s*(.+?)\\s*\r\n", REG_EXTENDED)){
+    return false;
+  }
 
   const auto bufsiz = 2048;
   char buf[bufsiz];
@@ -837,13 +841,21 @@ inline bool read_headers(Stream &strm, Headers &headers) {
   for (;;) {
     if (!reader.getline()) { return false; }
     if (!strcmp(reader.ptr(), "\r\n")) { break; }
-    std::cmatch m;
-    if (std::regex_match(reader.ptr(), m, re)) {
-      auto key = std::string(m[1]);
-      auto val = std::string(m[2]);
+    
+    int n = 3;
+    regmatch_t matches[n];
+    if (REG_NOMATCH != regexec(&re, reader.ptr(), n, matches, 0)){
+      auto key = std::string(reader.ptr()+matches[1].rm_so, matches[1].rm_eo-matches[1].rm_so);
+      auto val = std::string(reader.ptr()+matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so);
+      if (!val.empty()){//清除首尾空格，貌似\\s*不生效
+        val.erase(0, val.find_first_not_of(" "));
+        val.erase(val.find_last_not_of(" ") + 1);
+      }
       headers.emplace(key, val);
     }
   }
+
+  regfree(&re);
 
   return true;
 }
@@ -1138,12 +1150,17 @@ inline bool parse_multipart_formdata(const std::string &boundary,
   static std::string dash = "--";
   static std::string crlf = "\r\n";
 
-  static std::regex re_content_type("Content-Type: (.*?)",
-                                    std::regex_constants::icase);
+  regex_t re_content_type;
+  if (0 != regcomp(&re_content_type, "Content-Type: (.*?)", REG_EXTENDED|REG_ICASE)){
+    return false;
+  }
 
-  static std::regex re_content_disposition(
-      "Content-Disposition: form-data; name=\"(.*?)\"(?:; filename=\"(.*?)\")?",
-      std::regex_constants::icase);
+  regex_t re_content_disposition;
+  if (0 != regcomp(&re_content_disposition,
+    "Content-Disposition: form-data; name=\"(.*?)\"(?:; filename=\"(.*?)\")?",
+    REG_EXTENDED|REG_ICASE)){
+    return false;
+  }
 
   auto dash_boundary = dash + boundary;
 
@@ -1167,12 +1184,20 @@ inline bool parse_multipart_formdata(const std::string &boundary,
     auto header = body.substr(pos, (next_pos - pos));
 
     while (pos != next_pos) {
-      std::smatch m;
-      if (std::regex_match(header, m, re_content_type)) {
-        file.content_type = m[1];
-      } else if (std::regex_match(header, m, re_content_disposition)) {
-        name = m[1];
-        file.filename = m[2];
+      {
+        int n = 2;
+        regmatch_t matches[n];
+        if (REG_NOMATCH != regexec(&re_content_type, header.c_str(), n, matches, 0)){
+          file.content_type = header.substr(matches[1].rm_so, matches[1].rm_eo-matches[1].rm_so);
+        }
+      }
+      {
+        int n = 3;
+        regmatch_t matches[n];
+        if (REG_NOMATCH != regexec(&re_content_disposition, header.c_str(), n, matches, 0)){
+          name = header.substr(matches[1].rm_so, matches[1].rm_eo-matches[1].rm_so);
+          file.filename = header.substr(matches[2].rm_so, matches[2].rm_eo-matches[2].rm_so);
+        }
       }
 
       pos = next_pos + crlf.size();
@@ -1202,6 +1227,8 @@ inline bool parse_multipart_formdata(const std::string &boundary,
     pos = next_pos + crlf.size();
   }
 
+  regfree(&re_content_type);
+  regfree(&re_content_disposition);
   return true;
 }
 
@@ -1504,32 +1531,32 @@ inline Server::Server()
 inline Server::~Server() {}
 
 inline Server &Server::Get(const char *pattern, Handler handler) {
-  get_handlers_.push_back(std::make_pair(std::regex(pattern), handler));
+  get_handlers_.push_back(std::make_pair(std::string(pattern), handler));
   return *this;
 }
 
 inline Server &Server::Post(const char *pattern, Handler handler) {
-  post_handlers_.push_back(std::make_pair(std::regex(pattern), handler));
+  post_handlers_.push_back(std::make_pair(std::string(pattern), handler));
   return *this;
 }
 
 inline Server &Server::Put(const char *pattern, Handler handler) {
-  put_handlers_.push_back(std::make_pair(std::regex(pattern), handler));
+  put_handlers_.push_back(std::make_pair(std::string(pattern), handler));
   return *this;
 }
 
 inline Server &Server::Patch(const char *pattern, Handler handler) {
-  patch_handlers_.push_back(std::make_pair(std::regex(pattern), handler));
+  patch_handlers_.push_back(std::make_pair(std::string(pattern), handler));
   return *this;
 }
 
 inline Server &Server::Delete(const char *pattern, Handler handler) {
-  delete_handlers_.push_back(std::make_pair(std::regex(pattern), handler));
+  delete_handlers_.push_back(std::make_pair(std::string(pattern), handler));
   return *this;
 }
 
 inline Server &Server::Options(const char *pattern, Handler handler) {
-  options_handlers_.push_back(std::make_pair(std::regex(pattern), handler));
+  options_handlers_.push_back(std::make_pair(std::string(pattern), handler));
   return *this;
 }
 
@@ -1579,19 +1606,26 @@ inline void Server::stop() {
 }
 
 inline bool Server::parse_request_line(const char *s, Request &req) {
-  static std::regex re("(GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS) "
-                       "(([^?]+)(?:\\?(.+?))?) (HTTP/1\\.[01])\r\n");
+  regex_t re;
+  if (0 != regcomp(&re, "(GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS) (([^?]+)(\\?(.+?))?) (HTTP/1\\.[01])\r\n", REG_EXTENDED)){
+    return false;
+  }
 
-  std::cmatch m;
-  if (std::regex_match(s, m, re)) {
-    req.version = std::string(m[5]);
-    req.method = std::string(m[1]);
-    req.target = std::string(m[2]);
-    req.path = detail::decode_url(m[3]);
+  int n = 7;
+  regmatch_t matches[n];
+  if (REG_NOMATCH != regexec(&re, s, n, matches, 0)) {
+    req.version = std::string(s+matches[6].rm_so, matches[6].rm_eo - matches[6].rm_so);
+    req.method = std::string(s+matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+    req.target = std::string(s+matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+    req.path = std::string(s+matches[3].rm_so, matches[3].rm_eo - matches[3].rm_so);
 
     // Parse query text
-    auto len = std::distance(m[4].first, m[4].second);
-    if (len > 0) { detail::parse_query_text(m[4], req.params); }
+    if (matches[5].rm_eo - matches[5].rm_so > 0 && matches[5].rm_so != -1 && matches[5].rm_eo != -1){
+      auto m5 = std::string(s+matches[5].rm_so, matches[5].rm_eo - matches[5].rm_so);
+      detail::parse_query_text(m5, req.params);
+    }
+
+    regfree(&re);
 
     return true;
   }
@@ -1813,7 +1847,12 @@ inline bool Server::dispatch_request(Request &req, Response &res,
     const auto &pattern = x.first;
     const auto &handler = x.second;
 
-    if (std::regex_match(req.path, req.matches, pattern)) {
+    regex_t re;
+    if (0 != regcomp(&re, pattern.c_str(), REG_EXTENDED|REG_NOSUB)){
+      return false;
+    }
+
+    if (REG_NOMATCH != regexec(&re, req.path.c_str(), 0, nullptr, 0)) {
       handler(req, res);
       return true;
     }
@@ -1948,12 +1987,16 @@ inline bool Client::read_response_line(Stream &strm, Response &res) {
 
   if (!reader.getline()) { return false; }
 
-  const static std::regex re("(HTTP/1\\.[01]) (\\d+?) .*\r\n");
+  regex_t re;
+  if (0 != regcomp(&re, "(HTTP/1\\.[01]) ([0-9]+?) .*\r\n", REG_EXTENDED)){
+    return false;
+  }
 
-  std::cmatch m;
-  if (std::regex_match(reader.ptr(), m, re)) {
-    res.version = std::string(m[1]);
-    res.status = stoi(std::string(m[2]).c_str(), 0 ,10);
+  int n = 3;
+  regmatch_t matches[3];
+  if (REG_NOMATCH != regexec(&re, reader.ptr(), n, matches, 0)) {
+    res.version = std::string(reader.ptr()+matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+    res.status = stoi(std::string(reader.ptr()+matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so), 0 ,10);
   }
 
   return true;

@@ -1,5 +1,6 @@
 #include "../src/xport.h"
 #include <string>
+#include <stdio.h>
 
 using namespace xport;
 using namespace std;

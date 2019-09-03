@@ -3,6 +3,8 @@
 #ifndef _GLIBCXX_USE_C99
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <cinttypes>
 std::string to_string(int32_t val){
     auto len = 4*sizeof(int32_t);
     char buf[len];
@@ -12,7 +14,7 @@ std::string to_string(int32_t val){
 std::string to_string(int64_t val){
     auto len = 4*sizeof(int64_t);
     char buf[len];
-    snprintf(buf, len, "%ld", val);
+    snprintf(buf, len, "%" PRId64, val);
     return buf;
 }
 
@@ -25,7 +27,7 @@ std::string to_string(uint32_t val){
 std::string to_string(uint64_t val){
     auto len = 4*sizeof(uint64_t);
     char buf[len];
-    snprintf(buf, len, "%lu", val);
+    snprintf(buf, len, "%" PRIu64, val);
     return buf;
 }
 

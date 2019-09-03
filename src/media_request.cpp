@@ -1,6 +1,5 @@
 #include "media_request.h"
 #include "httplib.h"
-#include <regex>
 
 using namespace std;
 using namespace httplib;
@@ -14,11 +13,26 @@ MediaRequest::MediaRequest(MediaRequestImpl* impl)
 
 MediaRequest::~MediaRequest(){}
 
+static vector<string> split(const string& str, const string& pattern){
+    string::size_type pos = 0;
+    vector<string> result;
+    auto s = str.substr(1)+"/";
+
+    while (pos < s.size()){
+        auto last = pos;
+        pos = s.find(pattern, last);
+        if (pos == string::npos)
+            break;
+        result.push_back(s.substr(last, pos - last));
+        pos+=1;
+    }
+    
+    return result;
+}
+
 vector<string> MediaRequest::segments(){
     auto req = (Request*)mImpl;
-    
-    regex delim("/");
-    return vector<string>(sregex_token_iterator(req->path.begin()+1, req->path.end(), delim, -1), sregex_token_iterator());
+    return split(req->path, "/");
 }
 
 multimap<string, string> MediaRequest::params(){

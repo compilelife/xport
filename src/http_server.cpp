@@ -5,7 +5,7 @@
 #include <string>
 #include <future>
 #include <chrono>
-#include <regex>
+#include <regex.h>
 #include <stdexcept>
 #include "log.h"
 
@@ -100,12 +100,20 @@ public:
     }
 
     inline string getSessionId(const Request& req){
-        regex idPattern("id=(-?\\d+)");
+        regex_t idPattern;
+        if (0 != regcomp(&idPattern, "id=(-?[0-9]+)", REG_EXTENDED)){
+            loge("compile id patten failed\n");
+            return "";
+        }
 
-        smatch sm;
+        int n = 2;
+        regmatch_t matches[n];
         auto cookie = req.get_header_value("Cookie");
-        if (regex_search(cookie, sm, idPattern))
-            return sm.str(1);
+        if (REG_NOMATCH != regexec(&idPattern, cookie.c_str(), n, matches, 0)){
+            return cookie.substr(matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+        }
+
+        regfree(&idPattern);
         return "";
     }
 
@@ -113,33 +121,31 @@ public:
         from = 0;
         to = -1;
 
-        regex rangePattern("bytes=(\\d+)-(\\d+)?");
+        regex_t rangePattern;
+        if (0 != regcomp(&rangePattern, "bytes=([0-9]+)-([0-9]+)?", REG_EXTENDED)){
+            loge("range pattern compile failed");
+            return;
+        }
 
-        smatch sm;
         auto range = req.get_header_value("Range");
-        if (regex_search(range, sm, rangePattern)){
-            auto fromStr = sm.str(1);
+        int n = 3;
+        regmatch_t matches[n];
+
+        if (REG_NOMATCH != regexec(&rangePattern, range.c_str(), n, matches, 0)){
+            auto fromStr = range.substr(matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
             if (!fromStr.empty()){
-                try{
-                    from = stoi(fromStr);
-                }catch(invalid_argument& e){
-                    loge("invalid 'from': %s", e.what());
-                    from = 0;
-                }
+                from = stoi(fromStr);
             }
-            
-            if (sm.size()>=3){
-                auto toStr = sm.str(2);
+                
+            if (matches[2].rm_so != -1 && matches[2].rm_eo != -1){
+                auto toStr = range.substr(matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
                 if (!toStr.empty()){
-                    try{
-                        to = stoi(toStr);
-                    }catch(invalid_argument& e){
-                        loge("invlaid 'to': %s", e.what());
-                        to = -1;
-                    }
+                    to = stoi(toStr);
                 }
             }
         }
+
+        regfree(&rangePattern);
     }
 
     void makeMediaResponse(const Request &req, Response& res, const shared_ptr<ReadMedia>& media) {
