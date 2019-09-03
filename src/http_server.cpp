@@ -177,7 +177,8 @@ public:
                 return;
             }
 
-            res.status = 206;
+            // res.status = 206; //todo 只在客户端真的请求部分数据时返回206
+            res.status = 200;
             auto length = reader->to() - reader->from() + 1;
             res.set_header("Content-Length", to_string(length));
             res.set_header("Content-Range", "bytes " + to_string(reader->from()) + "-" + to_string(reader->to()) + "/" + to_string(media->size()));
