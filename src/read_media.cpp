@@ -1,5 +1,7 @@
 #include "read_media.h"
 #include "log.h"
+#include "config.h"
+#include <stdio.h>
 
 using namespace std;
 

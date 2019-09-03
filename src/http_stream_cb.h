@@ -10,6 +10,7 @@ class HttpStreamCB{
 private:
     std::shared_ptr<IReader> mReader;
     const uint64_t mSize;
+    const std::string mTag;
 
 public:
     HttpStreamCB(const std::shared_ptr<IReader>& reader);

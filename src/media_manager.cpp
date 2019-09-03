@@ -2,6 +2,7 @@
 #include "media_factory.h"
 #include "log.h"
 #include <algorithm>
+#include "config.h"
 
 using namespace std;
 using namespace aloop;

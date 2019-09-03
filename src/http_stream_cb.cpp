@@ -1,15 +1,19 @@
 #include "http_stream_cb.h"
 #include "log.h"
+#include <string>
+#include "config.h"
 
 using namespace std;
 
-#define TAG (to_string(mReader->mediaId()).c_str())
+#define TAG (mTag.c_str())
 
 namespace xport
 {
 
 HttpStreamCB::HttpStreamCB(const shared_ptr<IReader>& reader)
-    :mReader(reader), mSize(reader->to() > 0 ? reader->to() - reader->from() + 1 : -1){
+    :mReader(reader),
+     mSize(reader->to() > 0 ? reader->to() - reader->from() + 1 : -1),
+     mTag(to_string(mReader->mediaId())){
 }
 
 string HttpStreamCB::read(uint64_t offset){

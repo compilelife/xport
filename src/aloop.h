@@ -14,6 +14,7 @@
 #include <cassert>
 #include <string.h>
 #include <functional>
+#include <sys/types.h>
 
 #define ALOOP_LOG_LEVEL_INFO 0
 #define ALOOP_LOG_LEVEL_WARN 1

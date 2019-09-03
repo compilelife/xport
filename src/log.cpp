@@ -2,6 +2,8 @@
 #include "aloop.h"
 #include <functional>
 #include <stdarg.h>
+#include <stdio.h>
+
 using namespace std;
 
 namespace xport{

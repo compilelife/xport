@@ -81,6 +81,8 @@ typedef int socket_t;
 #include <zlib.h>
 #endif
 
+#include "config.h"
+
 /*
  * Configuration
  */
@@ -94,6 +96,7 @@ typedef int socket_t;
 
 namespace httplib {
 
+using namespace std;
 namespace detail {
 
 struct ci {
@@ -626,7 +629,7 @@ socket_t create_socket(const char *host, int port, Fn fn,
   hints.ai_flags = socket_flags;
   hints.ai_protocol = 0;
 
-  auto service = std::to_string(port);
+  auto service = to_string(port);
 
   if (getaddrinfo(host, service.c_str(), &hints, &result)) {
     return INVALID_SOCKET;
@@ -818,7 +821,7 @@ inline uint64_t get_header_value_uint64(const Headers &headers, const char *key,
                                         int def = 0) {
   auto it = headers.find(key);
   if (it != headers.end()) {
-    return std::strtoull(it->second.data(), nullptr, 10);
+    return strtoull(it->second.data(), nullptr, 10);
   }
   return def;
 }
@@ -896,7 +899,7 @@ inline bool read_content_chunked(Stream &strm, std::string &out) {
 
   if (!reader.getline()) { return false; }
 
-  auto chunk_len = std::stoi(reader.ptr(), 0, 16);
+  auto chunk_len = stoi(reader.ptr(), 0, 16);
 
   while (chunk_len > 0) {
     std::string chunk;
@@ -912,7 +915,7 @@ inline bool read_content_chunked(Stream &strm, std::string &out) {
 
     if (!reader.getline()) { return false; }
 
-    chunk_len = std::stoi(reader.ptr(), 0, 16);
+    chunk_len = stoi(reader.ptr(), 0, 16);
   }
 
   if (chunk_len == 0) {
@@ -1217,14 +1220,14 @@ inline void make_range_header_core(std::string &) {}
 template <typename uint64_t>
 inline void make_range_header_core(std::string &field, uint64_t value) {
   if (!field.empty()) { field += ", "; }
-  field += std::to_string(value) + "-";
+  field += to_string(value) + "-";
 }
 
 template <typename uint64_t, typename... Args>
 inline void make_range_header_core(std::string &field, uint64_t value1,
                                    uint64_t value2, Args... args) {
   if (!field.empty()) { field += ", "; }
-  field += std::to_string(value1) + "-" + std::to_string(value2);
+  field += to_string(value1) + "-" + to_string(value2);
   make_range_header_core(field, args...);
 }
 
@@ -1639,7 +1642,7 @@ inline void Server::write_response(Stream &strm, bool last_connection,
       res.set_header("Content-Type", "text/plain");
     }
 
-    auto length = std::to_string(res.body.size());
+    auto length = to_string(res.body.size());
     res.set_header("Content-Length", length.c_str());
   }
 
@@ -1912,7 +1915,7 @@ inline bool Server::read_and_close_socket(socket_t sock) {
 // HTTP client implementation
 inline Client::Client(const char *host, int port, time_t timeout_sec)
     : host_(host), port_(port), timeout_sec_(timeout_sec),
-      host_and_port_(host_ + ":" + std::to_string(port_)) {}
+      host_and_port_(host_ + ":" + to_string(port_)) {}
 
 inline Client::~Client() {}
 
@@ -1950,7 +1953,7 @@ inline bool Client::read_response_line(Stream &strm, Response &res) {
   std::cmatch m;
   if (std::regex_match(reader.ptr(), m, re)) {
     res.version = std::string(m[1]);
-    res.status = std::stoi(std::string(m[2]));
+    res.status = stoi(std::string(m[2]).c_str(), 0 ,10);
   }
 
   return true;
@@ -2011,7 +2014,7 @@ inline void Client::write_request(Stream &strm, Request &req) {
     }
 
     if (!req.has_header("Content-Length")) {
-      auto length = std::to_string(req.body.size());
+      auto length = to_string(req.body.size());
       req.set_header("Content-Length", length.c_str());
     }
   }
